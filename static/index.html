@@ -37,12 +37,21 @@
         <span style="font-size: 24px; vertical-align: top; line-height: 200px;">=</span>
         <div id="result" class="color-box"></div>
     </div>
+    <!-- show count number of each click and sum -->
+    <div>
+        <p>Yellow Count: <span id="yellow-count">0</span></p>
+        <p>Blue Count: <span id="blue-count">0</span></p>
+        <p>Total Count: <span id="total-count">0</span></p>
+    </div>
     <div>
         <h2>Result Color</h2>
         <p id="color-hex">#FFFFFF</p>
     </div>
 
     <script>
+        let yellowCount = 0;
+        let blueCount = 0;
+
         async function addColor(color) {
             console.log(`Adding color: ${color}`);
             const response = await fetch("/add_color", {
@@ -56,6 +65,15 @@
             document.getElementById("result").style.backgroundColor =
                 result.color;
 
+            if (color === 'yellow') {
+                yellowCount++;
+            } else if (color === 'blue') {
+                blueCount++;
+            }
+
+            document.getElementById('yellow-count').innerText = yellowCount;
+            document.getElementById('blue-count').innerText = blueCount;
+            document.getElementById('total-count').innerText = yellowCount + blueCount;
         }
     </script>
 </body>
