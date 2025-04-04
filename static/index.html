@@ -236,14 +236,11 @@
     </div>
 
     <script>
-        // Use a module pattern for better encapsulation
         const ColorMixer = (function() {
-            // Private variables
             let yellowCount = 0;
             let blueCount = 0;
             let isRequestPending = false;
             
-            // Cache DOM elements for better performance
             const elements = {
                 result: document.getElementById("result"),
                 colorHex: document.getElementById("color-hex"),
@@ -254,12 +251,10 @@
                 addBlueBtn: document.getElementById("add-blue")
             };
             
-            // Initialize event listeners using event delegation
             function init() {
                 elements.addYellowBtn.addEventListener("click", () => addColor('yellow'));
                 elements.addBlueBtn.addEventListener("click", () => addColor('blue'));
                 
-                // Add keyboard support
                 elements.addYellowBtn.addEventListener("keydown", (e) => {
                     if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
@@ -274,65 +269,43 @@
                     }
                 });
                 
-                // Preload initial state
                 updateDisplay('#FFFFFF');
             }
             
-            // Debounce function to prevent rapid clicks
-            function debounce(func, wait) {
-                let timeout;
-                return function(...args) {
-                    clearTimeout(timeout);
-                    timeout = setTimeout(() => func.apply(this, args), wait);
-                };
-            }
-            
-            // Update the UI with new color data
             function updateDisplay(color) {
                 elements.colorHex.innerText = color;
                 elements.result.style.backgroundColor = color;
                 elements.result.setAttribute('aria-label', `Result color: ${color}`);
                 
-                // Update counter display
                 elements.yellowCount.innerText = yellowCount;
                 elements.blueCount.innerText = blueCount;
                 elements.totalCount.innerText = yellowCount + blueCount;
                 
-                // Add animation effect to the result box
                 elements.result.classList.add('animate-pulse');
                 
-                // Remove animation class after animation completes
                 setTimeout(() => {
                     elements.result.classList.remove('animate-pulse');
                 }, 300);
             }
             
-            // Add color with optimized fetch handling
             async function addColor(color) {
-                // Prevent multiple simultaneous requests
                 if (isRequestPending) return;
                 
                 try {
                     isRequestPending = true;
                     
-                    // Disable buttons during request
                     elements.addYellowBtn.disabled = true;
                     elements.addBlueBtn.disabled = true;
                     
-                    // Optimistic UI update
                     if (color === 'yellow') {
                         yellowCount++;
                     } else if (color === 'blue') {
                         blueCount++;
                     }
                     
-                    // Update counters immediately for better UX
                     elements.yellowCount.innerText = yellowCount;
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
-                    
-                    const controller = new AbortController();
-                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
                     
                     const response = await fetch("/add_color", {
                         method: "POST",
@@ -340,11 +313,8 @@
                             "Content-Type": "application/json",
                             "Cache-Control": "no-cache"
                         },
-                        body: JSON.stringify({ color }),
-                        signal: controller.signal
+                        body: JSON.stringify({ color })
                     });
-                    
-                    clearTimeout(timeoutId);
                     
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
@@ -356,36 +326,30 @@
                 } catch (error) {
                     console.error("Error adding color:", error);
                     
-                    // Rollback optimistic update on error
                     if (color === 'yellow') {
                         yellowCount--;
                     } else if (color === 'blue') {
                         blueCount--;
                     }
                     
-                    // Update counters to reflect rollback
                     elements.yellowCount.innerText = yellowCount;
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
                     
-                    // Show error to user
                     alert("Failed to add color. Please try again.");
                 } finally {
                     isRequestPending = false;
-                    // Re-enable buttons
                     elements.addYellowBtn.disabled = false;
                     elements.addBlueBtn.disabled = false;
                 }
             }
             
-            // Public API
             return {
                 init,
-                addColor: debounce(addColor, 300) // Debounce color adding
+                addColor
             };
         })();
         
-        // Initialize the application when DOM is fully loaded
         document.addEventListener('DOMContentLoaded', ColorMixer.init);
     </script>
 </body>
