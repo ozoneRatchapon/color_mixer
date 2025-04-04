@@ -4,16 +4,32 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Interactive color mixer for combining yellow and blue colors">
     <title>Color Mixer</title>
     <style>
+        :root {
+            --primary-blue: #3498db;
+            --primary-blue-dark: #2980b9;
+            --primary-yellow: #f1c40f;
+            --primary-yellow-dark: #f39c12;
+            --text-color: #333;
+            --bg-color: #f8f9fa;
+            --border-color: #ddd;
+            --shadow-light: 0 2px 5px rgba(0, 0, 0, 0.1);
+            --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.2);
+            --border-radius: 10px;
+            --transition-speed: 0.2s;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             text-align: center;
             padding: 20px;
             max-width: 800px;
             margin: 0 auto;
-            background-color: #f8f9fa;
-            color: #333;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
         }
 
         h1, h2 {
@@ -28,14 +44,16 @@
             max-height: 200px;
             display: inline-block;
             margin: 10px;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: transform var(--transition-speed) ease, box-shadow var(--transition-speed) ease;
+            will-change: transform;
         }
 
         .color-box:hover {
             transform: scale(1.05);
+            box-shadow: var(--shadow-medium);
         }
 
         .color-container {
@@ -44,6 +62,7 @@
             align-items: center;
             flex-wrap: wrap;
             margin: 20px 0;
+            gap: 10px;
         }
 
         .operator {
@@ -96,45 +115,58 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            background-color: #3498db;
+            background-color: var(--primary-blue);
             color: white;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color var(--transition-speed) ease, 
+                        transform var(--transition-speed) ease, 
+                        box-shadow var(--transition-speed) ease;
+            box-shadow: var(--shadow-light);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         button:hover {
-            background-color: #2980b9;
+            background-color: var(--primary-blue-dark);
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: var(--shadow-medium);
         }
         
         button:active {
             transform: translateY(0);
         }
         
+        button:focus {
+            outline: 2px solid rgba(52, 152, 219, 0.5);
+            outline-offset: 2px;
+        }
+        
         .button-yellow {
-            background-color: #f1c40f;
+            background-color: var(--primary-yellow);
         }
         
         .button-yellow:hover {
-            background-color: #f39c12;
+            background-color: var(--primary-yellow-dark);
+        }
+        
+        .button-yellow:focus {
+            outline-color: rgba(241, 196, 15, 0.5);
         }
         
         .button-blue {
-            background-color: #3498db;
+            background-color: var(--primary-blue);
         }
         
         .button-blue:hover {
-            background-color: #2980b9;
+            background-color: var(--primary-blue-dark);
         }
 
         .stats-container {
             background-color: white;
-            border-radius: 10px;
+            border-radius: var(--border-radius);
             padding: 15px;
             margin: 20px auto;
             max-width: 400px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
         }
         
         .stats-item {
@@ -152,11 +184,21 @@
         .color-hex {
             font-family: monospace;
             font-size: 18px;
-            background-color: #f8f9fa;
+            background-color: var(--bg-color);
             padding: 8px 15px;
             border-radius: 5px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             display: inline-block;
+        }
+
+        .animate-pulse {
+            animation: pulse 0.3s ease;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
@@ -164,16 +206,16 @@
 <body>
     <h1>Color Mixer</h1>
     <div>
-        <button class="button-yellow" onclick="addColor('yellow')">Add Yellow</button>
-        <button class="button-blue" onclick="addColor('blue')">Add Blue</button>
+        <button class="button-yellow" id="add-yellow" aria-label="Add Yellow">Add Yellow</button>
+        <button class="button-blue" id="add-blue" aria-label="Add Blue">Add Blue</button>
     </div>
     
     <div class="color-container">
-        <div class="color-box" style="background-color: #FFED00;"></div>
-        <div class="operator">+</div>
-        <div class="color-box" style="background-color: #0047AB;"></div>
-        <div class="operator">=</div>
-        <div id="result" class="color-box"></div>
+        <div class="color-box" style="background-color: #FFED00;" aria-label="Yellow color"></div>
+        <div class="operator" aria-hidden="true">+</div>
+        <div class="color-box" style="background-color: #0047AB;" aria-label="Blue color"></div>
+        <div class="operator" aria-hidden="true">=</div>
+        <div id="result" class="color-box" aria-label="Result color"></div>
     </div>
     
     <div class="stats-container">
@@ -194,54 +236,157 @@
     </div>
 
     <script>
-        let yellowCount = 0;
-        let blueCount = 0;
-
-        async function addColor(color) {
-            console.log(`Adding color: ${color}`);
-            try {
-                const response = await fetch("/add_color", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ color }),
+        // Use a module pattern for better encapsulation
+        const ColorMixer = (function() {
+            // Private variables
+            let yellowCount = 0;
+            let blueCount = 0;
+            let isRequestPending = false;
+            
+            // Cache DOM elements for better performance
+            const elements = {
+                result: document.getElementById("result"),
+                colorHex: document.getElementById("color-hex"),
+                yellowCount: document.getElementById("yellow-count"),
+                blueCount: document.getElementById("blue-count"),
+                totalCount: document.getElementById("total-count"),
+                addYellowBtn: document.getElementById("add-yellow"),
+                addBlueBtn: document.getElementById("add-blue")
+            };
+            
+            // Initialize event listeners using event delegation
+            function init() {
+                elements.addYellowBtn.addEventListener("click", () => addColor('yellow'));
+                elements.addBlueBtn.addEventListener("click", () => addColor('blue'));
+                
+                // Add keyboard support
+                elements.addYellowBtn.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        addColor('yellow');
+                    }
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
+                elements.addBlueBtn.addEventListener("keydown", (e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        addColor('blue');
+                    }
+                });
                 
-                const result = await response.json();
-                console.log(result);
+                // Preload initial state
+                updateDisplay('#FFFFFF');
+            }
+            
+            // Debounce function to prevent rapid clicks
+            function debounce(func, wait) {
+                let timeout;
+                return function(...args) {
+                    clearTimeout(timeout);
+                    timeout = setTimeout(() => func.apply(this, args), wait);
+                };
+            }
+            
+            // Update the UI with new color data
+            function updateDisplay(color) {
+                elements.colorHex.innerText = color;
+                elements.result.style.backgroundColor = color;
+                elements.result.setAttribute('aria-label', `Result color: ${color}`);
                 
-                // Update the color display
-                document.getElementById("color-hex").innerText = result.color;
-                document.getElementById("result").style.backgroundColor = result.color;
-
-                // Update counters
-                if (color === 'yellow') {
-                    yellowCount++;
-                } else if (color === 'blue') {
-                    blueCount++;
-                }
-
                 // Update counter display
-                document.getElementById('yellow-count').innerText = yellowCount;
-                document.getElementById('blue-count').innerText = blueCount;
-                document.getElementById('total-count').innerText = yellowCount + blueCount;
+                elements.yellowCount.innerText = yellowCount;
+                elements.blueCount.innerText = blueCount;
+                elements.totalCount.innerText = yellowCount + blueCount;
                 
                 // Add animation effect to the result box
-                const resultBox = document.getElementById('result');
-                resultBox.style.transition = 'transform 0.3s ease';
-                resultBox.style.transform = 'scale(1.1)';
-                setTimeout(() => {
-                    resultBox.style.transform = 'scale(1)';
-                }, 300);
+                elements.result.classList.add('animate-pulse');
                 
-            } catch (error) {
-                console.error("Error adding color:", error);
-                alert("Failed to add color. Please try again.");
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    elements.result.classList.remove('animate-pulse');
+                }, 300);
             }
-        }
+            
+            // Add color with optimized fetch handling
+            async function addColor(color) {
+                // Prevent multiple simultaneous requests
+                if (isRequestPending) return;
+                
+                try {
+                    isRequestPending = true;
+                    
+                    // Disable buttons during request
+                    elements.addYellowBtn.disabled = true;
+                    elements.addBlueBtn.disabled = true;
+                    
+                    // Optimistic UI update
+                    if (color === 'yellow') {
+                        yellowCount++;
+                    } else if (color === 'blue') {
+                        blueCount++;
+                    }
+                    
+                    // Update counters immediately for better UX
+                    elements.yellowCount.innerText = yellowCount;
+                    elements.blueCount.innerText = blueCount;
+                    elements.totalCount.innerText = yellowCount + blueCount;
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                    
+                    const response = await fetch("/add_color", {
+                        method: "POST",
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Cache-Control": "no-cache"
+                        },
+                        body: JSON.stringify({ color }),
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    updateDisplay(result.color);
+                    
+                } catch (error) {
+                    console.error("Error adding color:", error);
+                    
+                    // Rollback optimistic update on error
+                    if (color === 'yellow') {
+                        yellowCount--;
+                    } else if (color === 'blue') {
+                        blueCount--;
+                    }
+                    
+                    // Update counters to reflect rollback
+                    elements.yellowCount.innerText = yellowCount;
+                    elements.blueCount.innerText = blueCount;
+                    elements.totalCount.innerText = yellowCount + blueCount;
+                    
+                    // Show error to user
+                    alert("Failed to add color. Please try again.");
+                } finally {
+                    isRequestPending = false;
+                    // Re-enable buttons
+                    elements.addYellowBtn.disabled = false;
+                    elements.addBlueBtn.disabled = false;
+                }
+            }
+            
+            // Public API
+            return {
+                init,
+                addColor: debounce(addColor, 300) // Debounce color adding
+            };
+        })();
+        
+        // Initialize the application when DOM is fully loaded
+        document.addEventListener('DOMContentLoaded', ColorMixer.init);
     </script>
 </body>
 
