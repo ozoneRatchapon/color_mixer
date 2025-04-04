@@ -9,15 +9,57 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 50px;
+            padding: 20px;
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: #f0f0f0; /* Added a light background color for better readability */
         }
 
         .color-box {
-            width: 200px;
-            height: 200px;
+            width: 30vw;
+            max-width: 200px;
+            height: 30vw;
+            max-height: 200px;
             display: inline-block;
             margin: 10px;
             border: 1px solid #000;
+            border-radius: 10px; /* Added border radius for a smoother look */
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .color-box {
+                width: 40vw;
+                height: 40vw;
+                margin: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .color-box {
+                width: 60vw;
+                height: 60vw;
+            }
+        }
+
+        /* Added styles for buttons to improve UI */
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #7e7e7e; /* Blue color for buttons */
+            color: white;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #086a0f; /* Darker blue on hover */
         }
     </style>
 </head>
