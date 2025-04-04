@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Color Mixer</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                padding: 50px;
+            }
+            .color-box {
+                width: 400px;
+                height: 400px;
+                display: inline-block;
+                margin: 10px;
+                border: 1px solid #000;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Color Mixer</h1>
+        <div>
+            <button onclick="addColor('yellow')">Add Yellow</button>
+            <button onclick="addColor('blue')">Add Blue</button>
+        </div>
+        <div id="result" class="color-box"></div>
+
+        <script>
+            async function addColor(color) {
+                console.log(`Adding color: ${color}`);
+                const response = await fetch("/add_color", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ color }),
+                });
+                const result = await response.json();
+                console.log(result);
+                document.getElementById("result").style.backgroundColor =
+                    result.color;
+
+            }
+        </script>
+    </body>
+</html>
