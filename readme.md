@@ -1,7 +1,20 @@
 # Color Mixer
 
+> A responsive Rust-powered web application that demonstrates real-time color mixing with precise RGB control and intuitive visual feedback.
+
 ## Overview
-Color Mixer is a simple web application built with Rust and Actix Web that demonstrates color mixing principles. Users can add yellow and blue colors through a web interface, and the application will display the resulting mixed color in real-time.
+Color Mixer is an interactive web application built with Rust and Actix Web that demonstrates color mixing principles. Users can add yellow and blue colors through a clean, intuitive web interface, and the application will display the resulting mixed color in real-time with exact RGB values.
+
+The project showcases modern Rust web development practices, combining a robust backend with a responsive frontend. It features a RESTful API with comprehensive error handling, cross-origin request support, and performance optimizations through caching. Whether you're learning about color theory or exploring Rust for web development, Color Mixer provides an educational and practical example.
+
+## Technical Highlights
+- **Rust Performance**: Built with Rust for memory safety and high performance
+- **Modern Web Architecture**: Clean separation between backend logic and frontend presentation
+- **RESTful API Design**: Well-structured endpoints with JSON communication
+- **Efficient Color Algorithms**: Precise RGB-based color mixing with mathematical accuracy
+- **Performance Optimization**: Implements LRU caching for frequent color calculations
+- **Error Resilience**: Custom error handling with informative client responses
+- **Cross-Platform Compatibility**: CORS support for integration with other web applications
 
 ## Features
 - **Visual Color Mixing**: Combine yellow and blue colors to see their mixture
