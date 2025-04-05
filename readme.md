@@ -6,8 +6,12 @@ Color Mixer is a simple web application built with Rust and Actix Web that demon
 ## Features
 - **Visual Color Mixing**: Combine yellow and blue colors to see their mixture
 - **Real-time Updates**: See the mixed color change instantly as you add colors
-- **RESTful API**: Simple API endpoint for color addition
+- **RESTful API**: Enhanced API endpoints for color manipulation
 - **Clean UI**: Minimalist interface with easy-to-use buttons
+- **CORS Support**: Support for cross-origin requests
+- **RGB-based Color Mixing**: Precise color mixing using exact RGB values
+- **Custom Error Handling**: Robust error handling with descriptive messages
+- **LRU Cache**: Performance optimization with cached color mixing results
 
 ## Screenshots
 *(Note: Add actual screenshots of the running application here)*
@@ -51,9 +55,12 @@ http://127.0.0.1:8080
 color_mixer/
 ├── src/
 │   ├── color_mixer.rs    # Core color mixing logic
+│   ├── error.rs          # Custom error types and handling
 │   └── main.rs           # Web server and API endpoints
 ├── static/
-│   └── index.html        # Frontend UI
+│   ├── index.html        # Frontend UI
+│   ├── styles.css        # CSS styles for the UI
+│   └── scripts.js        # JavaScript for frontend functionality
 └── Cargo.toml            # Project dependencies
 ```
 
@@ -79,7 +86,73 @@ Adds a color to the mixer.
 **Response:**
 ```json
 {
-  "color": "#HEXCODE" // The resulting mixed color
+  "color": "#HEXCODE",       // The resulting mixed color
+  "status": "success",        // Operation status
+  "rgb": {                   // RGB components
+    "r": 255,
+    "g": 237,
+    "b": 0
+  }
+}
+```
+
+#### GET `/get_current_color`
+Retrieves the current color mix.
+
+**Response:**
+```json
+{
+  "color": "#HEXCODE",       // The current mixed color
+  "status": "success",
+  "rgb": {                   // RGB components
+    "r": 127,
+    "g": 167,
+    "b": 85
+  }
+}
+```
+
+#### POST `/mix_colors`
+Mixes specific RGB colors.
+
+**Request Body:**
+```json
+{
+  "color1": {
+    "r": 255,
+    "g": 237,
+    "b": 0
+  },
+  "color2": {
+    "r": 0,
+    "g": 71,
+    "b": 171
+  },
+  "ratio": 0.5  // Optional, defaults to 0.5
+}
+```
+
+**Response:**
+```json
+{
+  "color": "#HEXCODE",       // The resulting mixed color
+  "status": "success",
+  "rgb": {                   // RGB components
+    "r": 127,
+    "g": 154,
+    "b": 85
+  }
+}
+```
+
+#### POST `/reset`
+Resets the color mixer to its initial state.
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Color mixer has been reset"
 }
 ```
 
@@ -88,8 +161,13 @@ Adds a color to the mixer.
 ### Dependencies
 - actix-web: Web server framework
 - actix-files: Static file serving
+- actix-cors: CORS support for cross-origin requests
 - serde: Serialization and deserialization
 - serde_json: JSON handling
+- thiserror: Custom error type definitions
+- lru: LRU cache implementation
+- log: Logging facade for Rust
+- env_logger: Logger implementation for the log crate
 
 ### Building for Production
 
@@ -115,9 +193,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - Add more base colors (red, green, etc.)
 - Implement color history to track changes
-- Add the ability to reset the mixer
 - Create a more sophisticated color mixing algorithm based on pigment properties
 - Add unit tests for color mixing logic
+- Implement a Docker container for easy deployment
+- Add user authentication for saved color palettes
+- Create a mobile-friendly responsive design
 
 ## Acknowledgments
 
