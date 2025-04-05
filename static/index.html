@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Interactive color mixer for combining yellow and blue colors">
     <title>Color Mixer</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
     <style>
         :root {
             --primary-blue: #3498db;
@@ -237,6 +238,9 @@
 
     <script>
         const ColorMixer = (function() {
+            // Define our exact colors
+            const YELLOW_HEX = "#FFED00";
+            const BLUE_HEX = "#0047AB";
             let yellowCount = 0;
             let blueCount = 0;
             let isRequestPending = false;
@@ -269,7 +273,20 @@
                     }
                 });
                 
-                updateDisplay('#FFFFFF');
+                // Initialize by fetching the current color
+                fetch("/api/current-color")
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success && result.data) {
+                            updateDisplay(result.data.color);
+                        } else {
+                            updateDisplay('#FFFFFF');
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Failed to fetch current color:", error);
+                        updateDisplay('#FFFFFF');
+                    });
             }
             
             function updateDisplay(color) {
@@ -297,6 +314,8 @@
                     elements.addYellowBtn.disabled = true;
                     elements.addBlueBtn.disabled = true;
                     
+                    const colorValue = color === 'yellow' ? YELLOW_HEX : (color === 'blue' ? BLUE_HEX : color);
+                    
                     if (color === 'yellow') {
                         yellowCount++;
                     } else if (color === 'blue') {
@@ -307,7 +326,7 @@
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
                     
-                    const response = await fetch("/add_color", {
+                    const response = await fetch("/api/add-color", {
                         method: "POST",
                         headers: { 
                             "Content-Type": "application/json",
@@ -321,7 +340,14 @@
                     }
                     
                     const result = await response.json();
-                    updateDisplay(result.color);
+                    
+                    if (result.success && result.data) {
+                        updateDisplay(result.data.color);
+                    } else if (result.error) {
+                        throw new Error(result.error);
+                    } else {
+                        throw new Error("Unexpected response format");
+                    }
                     
                 } catch (error) {
                     console.error("Error adding color:", error);
@@ -336,7 +362,7 @@
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
                     
-                    alert("Failed to add color. Please try again.");
+                    alert(`Failed to add color: ${error.message}. Please try again.`);
                 } finally {
                     isRequestPending = false;
                     elements.addYellowBtn.disabled = false;
