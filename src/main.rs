@@ -1,41 +1,46 @@
-use actix_cors::Cors;
-use actix_files as fs;
-use actix_web::{
-    middleware, web, App, Error as ActixError, HttpResponse, HttpServer, Responder,
-    ResponseError,
+use axum::{
+    extract::State,
+    http::{Method, StatusCode},
+    response::{IntoResponse, Json},
+    routing::{delete, get, post},
+    Router,
 };
+use log::{error, info};
 use serde::Serialize;
 use std::sync::Arc;
 use std::sync::RwLock;
-use tracing::{error, info, Level};
-use tracing_subscriber::FmtSubscriber;
-use validator::Validate;
+use std::time::Duration;
+use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
 
 mod color_mixer;
 mod error;
 
-use color_mixer::{AddColorRequest, ColorMixer};
+use color_mixer::{AddColorRequest, ColorMixer, MixingHistory};
 use error::ColorMixerError;
 
-// Implement ResponseError for our custom error type to use with Actix
-impl ResponseError for ColorMixerError {
-    fn error_response(&self) -> HttpResponse {
-        match self {
+// Make ColorMixerError compatible with axum's error handling
+impl IntoResponse for ColorMixerError {
+    fn into_response(self) -> axum::response::Response {
+        let (status, error_message) = match self {
             ColorMixerError::InvalidColorFormat(_) | ColorMixerError::UnsupportedColor(_) => {
-                HttpResponse::BadRequest().json(ErrorResponse {
-                    error: self.to_string(),
-                })
+                (StatusCode::BAD_REQUEST, self.to_string())
             }
-            ColorMixerError::MaxColorsReached => HttpResponse::BadRequest().json(ErrorResponse {
-                error: self.to_string(),
+            ColorMixerError::MaxColorsReached => (StatusCode::BAD_REQUEST, self.to_string()),
+            ColorMixerError::NoColors => (StatusCode::BAD_REQUEST, "No colors in mixer".to_string()),
+            _ => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Internal server error".to_string(),
+            ),
+        };
+
+        (
+            status,
+            Json(ErrorResponse {
+                error: error_message,
             }),
-            ColorMixerError::NoColors => HttpResponse::BadRequest().json(ErrorResponse {
-                error: "No colors in mixer".to_string(),
-            }),
-            _ => HttpResponse::InternalServerError().json(ErrorResponse {
-                error: "Internal server error".to_string(),
-            }),
-        }
+        )
+            .into_response()
     }
 }
 
@@ -61,14 +66,14 @@ struct ColorResponse {
 
 // Handler for adding a color
 async fn add_color(
-    data: web::Data<Arc<RwLock<ColorMixer>>>,
-    req: web::Json<AddColorRequest>,
-) -> Result<HttpResponse, ActixError> {
+    State(data): State<Arc<RwLock<ColorMixer>>>,
+    Json(req): Json<AddColorRequest>,
+) -> Result<Json<SuccessResponse<ColorResponse>>, ColorMixerError> {
     // Validate the request
-    req.validate().map_err(|e| {
-        error!("Validation error: {}", e);
-        ColorMixerError::InvalidColorFormat(e.to_string())
-    })?;
+    if req.color.is_empty() {
+        error!("Validation error: color cannot be empty");
+        return Err(ColorMixerError::InvalidColorFormat("Color cannot be empty".to_string()));
+    }
 
     // Access the color mixer with write lock since we're modifying it
     let mut mixer = data.write().map_err(|e| {
@@ -84,7 +89,7 @@ async fn add_color(
     mixer.save_to_history()?;
     
     // Return the mixed color
-    Ok(HttpResponse::Ok().json(SuccessResponse {
+    Ok(Json(SuccessResponse {
         success: true,
         data: ColorResponse {
             color: color.to_hex(),
@@ -95,8 +100,8 @@ async fn add_color(
 
 // Handler to get the current color
 async fn get_current_color(
-    data: web::Data<Arc<RwLock<ColorMixer>>>,
-) -> Result<HttpResponse, ActixError> {
+    State(data): State<Arc<RwLock<ColorMixer>>>,
+) -> Result<Json<SuccessResponse<ColorResponse>>, ColorMixerError> {
     // Access the color mixer with write lock since get_mixed_color requires mutable access
     let mut mixer = data.write().map_err(|e| {
         error!("Failed to acquire write lock: {}", e);
@@ -107,7 +112,7 @@ async fn get_current_color(
     let color = mixer.get_mixed_color()?;
     
     // Return the mixed color
-    Ok(HttpResponse::Ok().json(SuccessResponse {
+    Ok(Json(SuccessResponse {
         success: true,
         data: ColorResponse {
             color: color.to_hex(),
@@ -118,8 +123,8 @@ async fn get_current_color(
 
 // Handler to clear all colors
 async fn clear_colors(
-    data: web::Data<Arc<RwLock<ColorMixer>>>,
-) -> Result<HttpResponse, ActixError> {
+    State(data): State<Arc<RwLock<ColorMixer>>>,
+) -> Result<Json<SuccessResponse<&'static str>>, ColorMixerError> {
     // Access the color mixer with write lock since we're modifying it
     let mut mixer = data.write().map_err(|e| {
         error!("Failed to acquire write lock: {}", e);
@@ -130,7 +135,7 @@ async fn clear_colors(
     mixer.clear();
     
     // Return success
-    Ok(HttpResponse::Ok().json(SuccessResponse {
+    Ok(Json(SuccessResponse {
         success: true,
         data: "Colors cleared",
     }))
@@ -138,8 +143,8 @@ async fn clear_colors(
 
 // Handler to get the mixing history
 async fn get_history(
-    data: web::Data<Arc<RwLock<ColorMixer>>>,
-) -> Result<HttpResponse, ActixError> {
+    State(data): State<Arc<RwLock<ColorMixer>>>,
+) -> Result<Json<SuccessResponse<Vec<MixingHistory>>>, ColorMixerError> {
     // Access the color mixer with read lock since we're only reading
     let mixer = data.read().map_err(|e| {
         error!("Failed to acquire read lock: {}", e);
@@ -147,62 +152,60 @@ async fn get_history(
     })?;
 
     // Get the history
-    let history = mixer.get_history();
+    let history = mixer.get_history().to_vec();
     
     // Return the history
-    Ok(HttpResponse::Ok().json(SuccessResponse {
+    Ok(Json(SuccessResponse {
         success: true,
         data: history,
     }))
 }
 
 // Status handler
-async fn status() -> impl Responder {
-    HttpResponse::Ok().json(SuccessResponse {
+async fn status() -> Json<SuccessResponse<&'static str>> {
+    Json(SuccessResponse {
         success: true,
         data: "Color Mixer API is running",
     })
 }
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> std::io::Result<()> {
     // Initialize logging
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(Level::INFO)
-        .finish();
-    tracing::subscriber::set_global_default(subscriber).expect("Failed to set up logging");
+    env_logger::init_from_env(
+        env_logger::Env::default().default_filter_or("info"),
+    );
     
     info!("Starting Color Mixer API");
 
-    // Create the shared state with proper Arc wrapper
-    let color_mixer = web::Data::new(Arc::new(RwLock::new(ColorMixer::new())));
+    // Create the shared state
+    let color_mixer = Arc::new(RwLock::new(ColorMixer::new()));
 
-    // Start the HTTP server
-    HttpServer::new(move || {
-        // Configure CORS
-        let cors = Cors::default()
-            .allow_any_origin()
-            .allowed_methods(vec!["GET", "POST", "DELETE"])
-            .allowed_headers(vec!["Content-Type"])
-            .max_age(3600);
+    // Configure CORS
+    let cors = CorsLayer::new()
+        .allow_origin(Any)
+        .allow_methods([Method::GET, Method::POST, Method::DELETE])
+        .allow_headers(Any)
+        .max_age(Duration::from_secs(3600));
 
-        App::new()
-            .wrap(middleware::Logger::default()) // Enable logging
-            .wrap(cors) // Enable CORS
-            .app_data(color_mixer.clone())
-            // API routes
-            .service(
-                web::scope("/api")
-                    .route("/status", web::get().to(status))
-                    .route("/add-color", web::post().to(add_color))
-                    .route("/current-color", web::get().to(get_current_color))
-                    .route("/clear", web::delete().to(clear_colors))
-                    .route("/history", web::get().to(get_history))
-            )
-            // Static files
-            .service(fs::Files::new("/", "./static").index_file("index.html"))
-    })
-    .bind("127.0.0.1:8080")?
-    .run()
-    .await
+    // Define API routes
+    let api_routes = Router::new()
+        .route("/status", get(status))
+        .route("/add-color", post(add_color))
+        .route("/current-color", get(get_current_color))
+        .route("/clear", delete(clear_colors))
+        .route("/history", get(get_history));
+        
+    // Build the complete router
+    let app = Router::new()
+        .nest("/api", api_routes)
+        .with_state(color_mixer)
+        .layer(cors)
+        .fallback_service(ServeDir::new("static"));
+    
+    // Start the server
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await?;
+    info!("Server listening on http://127.0.0.1:8080");
+    axum::serve(listener, app).await
 }
+    

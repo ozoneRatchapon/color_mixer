@@ -1,10 +1,9 @@
-use chrono::{DateTime, Utc};
+use time::OffsetDateTime;
 use lru::LruCache;
 use rgb::RGB8;
 use serde::{Deserialize, Serialize, Serializer, Deserializer};
 use std::num::NonZeroUsize;
 use std::str::FromStr;
-use validator::Validate;
 
 use crate::error::{ColorMixerError, Result};
 
@@ -122,16 +121,15 @@ impl FromStr for Color {
 }
 
 /// Request for adding a color to the mixer
-#[derive(Debug, Deserialize, Validate)]
+#[derive(Debug, Deserialize)]
 pub struct AddColorRequest {
-    #[validate(length(min = 1))]
     pub color: String,
 }
 
 /// Stores the history of a color mixing operation
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MixingHistory {
-    pub timestamp: DateTime<Utc>,
+    pub timestamp: OffsetDateTime,
     pub input_colors: Vec<Color>,
     pub result_color: Color,
 }
@@ -256,13 +254,17 @@ impl ColorMixer {
         Ok(result)
     }
 
-    /// Add the current mix to history
+    /// Save the current mix to history
     pub fn save_to_history(&mut self) -> Result<()> {
-        let result_color = self.get_mixed_color()?;
+        if self.colors.is_empty() {
+            return Err(ColorMixerError::NoColors);
+        }
+
+        let mixed_color = self.get_mixed_color()?;
         let history_entry = MixingHistory {
-            timestamp: Utc::now(),
+            timestamp: OffsetDateTime::now_utc(),
             input_colors: self.colors.clone(),
-            result_color,
+            result_color: mixed_color,
         };
         self.history.push(history_entry);
         Ok(())

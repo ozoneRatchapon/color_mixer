@@ -1,0 +1,15 @@
+[build]
+incremental = true
+target-dir = "target"
+
+[profile.dev]
+opt-level = 0
+debug = 1  # Reduce debug symbols
+incremental = true
+
+[profile.release]
+opt-level = 3
+debug = 0
+strip = true  # Strip symbols from binary
+lto = true    # Enable Link Time Optimization
+codegen-units = 1  # Optimize for size
