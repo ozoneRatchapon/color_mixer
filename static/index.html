@@ -274,7 +274,7 @@
                 });
                 
                 // Initialize by fetching the current color
-                fetch("/api/current-color")
+                fetch("/api/color")
                     .then(response => response.json())
                     .then(result => {
                         if (result.success && result.data) {
@@ -326,7 +326,7 @@
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
                     
-                    const response = await fetch("/api/add-color", {
+                    const response = await fetch("/api/color", {
                         method: "POST",
                         headers: { 
                             "Content-Type": "application/json",
@@ -340,14 +340,7 @@
                     }
                     
                     const result = await response.json();
-                    
-                    if (result.success && result.data) {
-                        updateDisplay(result.data.color);
-                    } else if (result.error) {
-                        throw new Error(result.error);
-                    } else {
-                        throw new Error("Unexpected response format");
-                    }
+                    updateDisplay(result.color);
                     
                 } catch (error) {
                     console.error("Error adding color:", error);
