@@ -214,16 +214,26 @@
             font-weight: 500;
         }
 
-        .color-control input {
-            width: 60px;
+        .color-control input,
+        .color-control select {
             padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 5px;
             font-size: 16px;
+        }
+
+        .color-control input {
+            width: 60px;
             text-align: center;
         }
 
-        .color-control input:focus {
+        .color-control select {
+            width: 120px;
+            background-color: white;
+        }
+
+        .color-control input:focus,
+        .color-control select:focus {
             outline: 2px solid rgba(52, 152, 219, 0.5);
             outline-offset: 2px;
         }
@@ -256,12 +266,24 @@
     <h1>Color Mixer</h1>
     <div class="controls-container">
         <div class="color-control">
-            <label for="yellow-quantity">Yellow Quantity:</label>
+            <label for="yellow-shade">Yellow Shade:</label>
+            <select id="yellow-shade">
+                <option value="standard">Standard</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+            <label for="yellow-quantity">Quantity:</label>
             <input type="number" id="yellow-quantity" min="1" max="100" value="1">
             <button class="button-yellow" id="add-yellow" aria-label="Add Yellow">Add Yellow</button>
         </div>
         <div class="color-control">
-            <label for="blue-quantity">Blue Quantity:</label>
+            <label for="blue-shade">Blue Shade:</label>
+            <select id="blue-shade">
+                <option value="standard">Standard</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+            <label for="blue-quantity">Quantity:</label>
             <input type="number" id="blue-quantity" min="1" max="100" value="1">
             <button class="button-blue" id="add-blue" aria-label="Add Blue">Add Blue</button>
         </div>
@@ -314,7 +336,9 @@
                 addBlueBtn: document.getElementById("add-blue"),
                 clearBtn: document.getElementById("clear-colors"),
                 yellowQuantity: document.getElementById("yellow-quantity"),
-                blueQuantity: document.getElementById("blue-quantity")
+                blueQuantity: document.getElementById("blue-quantity"),
+                yellowShade: document.getElementById("yellow-shade"),
+                blueShade: document.getElementById("blue-shade")
             };
 
             function init() {
@@ -399,10 +423,15 @@
                     elements.addBlueBtn.disabled = true;
                     elements.clearBtn.disabled = true;
 
-                    // Get the quantity from the appropriate input
-                    const quantity = color === 'yellow'
-                        ? parseInt(elements.yellowQuantity.value, 10)
-                        : parseInt(elements.blueQuantity.value, 10);
+                    // Get the quantity and shade from the appropriate inputs
+                    let quantity, shade;
+                    if (color === 'yellow') {
+                        quantity = parseInt(elements.yellowQuantity.value, 10);
+                        shade = elements.yellowShade.value;
+                    } else if (color === 'blue') {
+                        quantity = parseInt(elements.blueQuantity.value, 10);
+                        shade = elements.blueShade.value;
+                    }
 
                     // Validate quantity
                     if (isNaN(quantity) || quantity < 1) {
@@ -428,7 +457,7 @@
                             "Content-Type": "application/json",
                             "Cache-Control": "no-cache"
                         },
-                        body: JSON.stringify({ color, quantity })
+                        body: JSON.stringify({ color, shade, quantity })
                     });
 
                     if (!response.ok) {
@@ -442,9 +471,12 @@
                     console.error("Error adding color:", error);
 
                     // Revert the counts if there was an error
-                    const quantity = color === 'yellow'
-                        ? parseInt(elements.yellowQuantity.value, 10)
-                        : parseInt(elements.blueQuantity.value, 10);
+                    let quantity;
+                    if (color === 'yellow') {
+                        quantity = parseInt(elements.yellowQuantity.value, 10);
+                    } else if (color === 'blue') {
+                        quantity = parseInt(elements.blueQuantity.value, 10);
+                    }
 
                     if (color === 'yellow') {
                         yellowCount -= quantity;

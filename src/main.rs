@@ -37,7 +37,7 @@ async fn add_color(
     }
 
     let mut mixer = state.write().await;
-    mixer.add_colors_str(&payload.color, payload.quantity).map_err(|e| match e {
+    mixer.add_colors_str(&payload.color, &payload.shade, payload.quantity).map_err(|e| match e {
         ColorMixerError::UnsupportedColor(msg) => (StatusCode::BAD_REQUEST, msg),
         ColorMixerError::MaxColorsReached => {
             (StatusCode::BAD_REQUEST, "Maximum number of colors reached".to_string())
