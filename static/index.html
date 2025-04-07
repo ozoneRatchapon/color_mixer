@@ -79,13 +79,13 @@
             body {
                 padding: 15px;
             }
-            
+
             .color-box {
                 width: 40vw;
                 height: 40vw;
                 margin: 5px;
             }
-            
+
             .operator {
                 font-size: 24px;
                 height: 150px;
@@ -97,11 +97,11 @@
                 width: 60vw;
                 height: 60vw;
             }
-            
+
             .color-container {
                 flex-direction: column;
             }
-            
+
             .operator {
                 height: auto;
                 margin: 10px 0;
@@ -118,8 +118,8 @@
             cursor: pointer;
             background-color: var(--primary-blue);
             color: white;
-            transition: background-color var(--transition-speed) ease, 
-                        transform var(--transition-speed) ease, 
+            transition: background-color var(--transition-speed) ease,
+                        transform var(--transition-speed) ease,
                         box-shadow var(--transition-speed) ease;
             box-shadow: var(--shadow-light);
             user-select: none;
@@ -131,32 +131,32 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow-medium);
         }
-        
+
         button:active {
             transform: translateY(0);
         }
-        
+
         button:focus {
             outline: 2px solid rgba(52, 152, 219, 0.5);
             outline-offset: 2px;
         }
-        
+
         .button-yellow {
             background-color: var(--primary-yellow);
         }
-        
+
         .button-yellow:hover {
             background-color: var(--primary-yellow-dark);
         }
-        
+
         .button-yellow:focus {
             outline-color: rgba(241, 196, 15, 0.5);
         }
-        
+
         .button-blue {
             background-color: var(--primary-blue);
         }
-        
+
         .button-blue:hover {
             background-color: var(--primary-blue-dark);
         }
@@ -169,19 +169,19 @@
             max-width: 400px;
             box-shadow: var(--shadow-light);
         }
-        
+
         .stats-item {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
             border-bottom: 1px solid #eee;
         }
-        
+
         .stats-item:last-child {
             border-bottom: none;
             font-weight: bold;
         }
-        
+
         .color-hex {
             font-family: monospace;
             font-size: 18px;
@@ -190,6 +190,54 @@
             border-radius: 5px;
             border: 1px solid var(--border-color);
             display: inline-block;
+        }
+
+        .controls-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px auto;
+            max-width: 500px;
+        }
+
+        .color-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .color-control label {
+            min-width: 120px;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .color-control input {
+            width: 60px;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .color-control input:focus {
+            outline: 2px solid rgba(52, 152, 219, 0.5);
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 480px) {
+            .color-control {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .color-control label {
+                text-align: center;
+                margin-bottom: 5px;
+            }
         }
 
         .animate-pulse {
@@ -206,11 +254,22 @@
 
 <body>
     <h1>Color Mixer</h1>
-    <div>
-        <button class="button-yellow" id="add-yellow" aria-label="Add Yellow">Add Yellow</button>
-        <button class="button-blue" id="add-blue" aria-label="Add Blue">Add Blue</button>
+    <div class="controls-container">
+        <div class="color-control">
+            <label for="yellow-quantity">Yellow Quantity:</label>
+            <input type="number" id="yellow-quantity" min="1" max="100" value="1">
+            <button class="button-yellow" id="add-yellow" aria-label="Add Yellow">Add Yellow</button>
+        </div>
+        <div class="color-control">
+            <label for="blue-quantity">Blue Quantity:</label>
+            <input type="number" id="blue-quantity" min="1" max="100" value="1">
+            <button class="button-blue" id="add-blue" aria-label="Add Blue">Add Blue</button>
+        </div>
+        <div class="color-control">
+            <button id="clear-colors" aria-label="Clear All Colors">Clear All</button>
+        </div>
     </div>
-    
+
     <div class="color-container">
         <div class="color-box" style="background-color: #FFED00;" aria-label="Yellow color"></div>
         <div class="operator" aria-hidden="true">+</div>
@@ -218,7 +277,7 @@
         <div class="operator" aria-hidden="true">=</div>
         <div id="result" class="color-box" aria-label="Result color"></div>
     </div>
-    
+
     <div class="stats-container">
         <div class="stats-item">
             <span>Yellow Count:</span> <span id="yellow-count">0</span>
@@ -230,7 +289,7 @@
             <span>Total Count:</span> <span id="total-count">0</span>
         </div>
     </div>
-    
+
     <div>
         <h2>Result Color</h2>
         <p class="color-hex" id="color-hex">#FFFFFF</p>
@@ -244,7 +303,7 @@
             let yellowCount = 0;
             let blueCount = 0;
             let isRequestPending = false;
-            
+
             const elements = {
                 result: document.getElementById("result"),
                 colorHex: document.getElementById("color-hex"),
@@ -252,123 +311,212 @@
                 blueCount: document.getElementById("blue-count"),
                 totalCount: document.getElementById("total-count"),
                 addYellowBtn: document.getElementById("add-yellow"),
-                addBlueBtn: document.getElementById("add-blue")
+                addBlueBtn: document.getElementById("add-blue"),
+                clearBtn: document.getElementById("clear-colors"),
+                yellowQuantity: document.getElementById("yellow-quantity"),
+                blueQuantity: document.getElementById("blue-quantity")
             };
-            
+
             function init() {
                 elements.addYellowBtn.addEventListener("click", () => addColor('yellow'));
                 elements.addBlueBtn.addEventListener("click", () => addColor('blue'));
-                
+                elements.clearBtn.addEventListener("click", clearColors);
+
+                // Validate quantity inputs
+                elements.yellowQuantity.addEventListener("change", validateQuantity);
+                elements.blueQuantity.addEventListener("change", validateQuantity);
+
                 elements.addYellowBtn.addEventListener("keydown", (e) => {
                     if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         addColor('yellow');
                     }
                 });
-                
+
                 elements.addBlueBtn.addEventListener("keydown", (e) => {
                     if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
                         addColor('blue');
                     }
                 });
-                
+
                 // Initialize by fetching the current color
                 fetch("/api/color")
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.success && result.data) {
-                            updateDisplay(result.data.color);
-                        } else {
-                            updateDisplay('#FFFFFF');
+                    .then(response => {
+                        if (!response.ok) {
+                            // If no colors are mixed yet, this is expected
+                            if (response.status === 400) {
+                                return { color: '#FFFFFF', rgb: [255, 255, 255] };
+                            }
+                            throw new Error(`HTTP error! Status: ${response.status}`);
                         }
+                        return response.json();
+                    })
+                    .then(result => {
+                        updateDisplay(result.color);
                     })
                     .catch(error => {
                         console.error("Failed to fetch current color:", error);
                         updateDisplay('#FFFFFF');
                     });
             }
-            
+
+            function validateQuantity(e) {
+                const input = e.target;
+                let value = parseInt(input.value, 10);
+
+                if (isNaN(value) || value < 1) {
+                    input.value = 1;
+                } else if (value > 100) {
+                    input.value = 100;
+                }
+            }
+
             function updateDisplay(color) {
                 elements.colorHex.innerText = color;
                 elements.result.style.backgroundColor = color;
                 elements.result.setAttribute('aria-label', `Result color: ${color}`);
-                
+
                 elements.yellowCount.innerText = yellowCount;
                 elements.blueCount.innerText = blueCount;
                 elements.totalCount.innerText = yellowCount + blueCount;
-                
+
                 elements.result.classList.add('animate-pulse');
-                
+
                 setTimeout(() => {
                     elements.result.classList.remove('animate-pulse');
                 }, 300);
             }
-            
+
             async function addColor(color) {
                 if (isRequestPending) return;
-                
+
                 try {
                     isRequestPending = true;
-                    
+
+                    // Disable all buttons during the request
                     elements.addYellowBtn.disabled = true;
                     elements.addBlueBtn.disabled = true;
-                    
-                    const colorValue = color === 'yellow' ? YELLOW_HEX : (color === 'blue' ? BLUE_HEX : color);
-                    
-                    if (color === 'yellow') {
-                        yellowCount++;
-                    } else if (color === 'blue') {
-                        blueCount++;
+                    elements.clearBtn.disabled = true;
+
+                    // Get the quantity from the appropriate input
+                    const quantity = color === 'yellow'
+                        ? parseInt(elements.yellowQuantity.value, 10)
+                        : parseInt(elements.blueQuantity.value, 10);
+
+                    // Validate quantity
+                    if (isNaN(quantity) || quantity < 1) {
+                        throw new Error('Quantity must be at least 1');
                     }
-                    
+
+                    // Update local counts
+                    if (color === 'yellow') {
+                        yellowCount += quantity;
+                    } else if (color === 'blue') {
+                        blueCount += quantity;
+                    }
+
+                    // Update the display with the new counts
                     elements.yellowCount.innerText = yellowCount;
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
-                    
+
+                    // Send the request to the server
                     const response = await fetch("/api/color", {
                         method: "POST",
-                        headers: { 
+                        headers: {
                             "Content-Type": "application/json",
                             "Cache-Control": "no-cache"
                         },
-                        body: JSON.stringify({ color })
+                        body: JSON.stringify({ color, quantity })
                     });
-                    
+
                     if (!response.ok) {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                    
+
                     const result = await response.json();
                     updateDisplay(result.color);
-                    
+
                 } catch (error) {
                     console.error("Error adding color:", error);
-                    
+
+                    // Revert the counts if there was an error
+                    const quantity = color === 'yellow'
+                        ? parseInt(elements.yellowQuantity.value, 10)
+                        : parseInt(elements.blueQuantity.value, 10);
+
                     if (color === 'yellow') {
-                        yellowCount--;
+                        yellowCount -= quantity;
                     } else if (color === 'blue') {
-                        blueCount--;
+                        blueCount -= quantity;
                     }
-                    
+
+                    // Update the display with the reverted counts
                     elements.yellowCount.innerText = yellowCount;
                     elements.blueCount.innerText = blueCount;
                     elements.totalCount.innerText = yellowCount + blueCount;
-                    
+
                     alert(`Failed to add color: ${error.message}. Please try again.`);
                 } finally {
                     isRequestPending = false;
                     elements.addYellowBtn.disabled = false;
                     elements.addBlueBtn.disabled = false;
+                    elements.clearBtn.disabled = false;
                 }
             }
-            
+
+            async function clearColors() {
+                if (isRequestPending) return;
+
+                try {
+                    isRequestPending = true;
+
+                    // Disable all buttons during the request
+                    elements.addYellowBtn.disabled = true;
+                    elements.addBlueBtn.disabled = true;
+                    elements.clearBtn.disabled = true;
+
+                    // Send the request to clear colors
+                    const response = await fetch("/api/clear", {
+                        method: "POST",
+                        headers: {
+                            "Cache-Control": "no-cache"
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+
+                    // Reset local counts
+                    yellowCount = 0;
+                    blueCount = 0;
+
+                    // Update the display
+                    elements.yellowCount.innerText = '0';
+                    elements.blueCount.innerText = '0';
+                    elements.totalCount.innerText = '0';
+                    updateDisplay('#FFFFFF');
+
+                } catch (error) {
+                    console.error("Error clearing colors:", error);
+                    alert(`Failed to clear colors: ${error.message}. Please try again.`);
+                } finally {
+                    isRequestPending = false;
+                    elements.addYellowBtn.disabled = false;
+                    elements.addBlueBtn.disabled = false;
+                    elements.clearBtn.disabled = false;
+                }
+            }
+
             return {
                 init,
-                addColor
+                addColor,
+                clearColors
             };
         })();
-        
+
         document.addEventListener('DOMContentLoaded', ColorMixer.init);
     </script>
 </body>

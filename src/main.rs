@@ -32,8 +32,12 @@ async fn add_color(
         return Err((StatusCode::BAD_REQUEST, "Color cannot be empty".to_string()));
     }
 
+    if payload.quantity == 0 {
+        return Err((StatusCode::BAD_REQUEST, "Quantity must be greater than zero".to_string()));
+    }
+
     let mut mixer = state.write().await;
-    mixer.add_color_str(&payload.color).map_err(|e| match e {
+    mixer.add_colors_str(&payload.color, payload.quantity).map_err(|e| match e {
         ColorMixerError::UnsupportedColor(msg) => (StatusCode::BAD_REQUEST, msg),
         ColorMixerError::MaxColorsReached => {
             (StatusCode::BAD_REQUEST, "Maximum number of colors reached".to_string())
@@ -92,4 +96,4 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8080").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }
-    
+
