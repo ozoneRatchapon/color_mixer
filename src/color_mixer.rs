@@ -21,12 +21,6 @@ impl Color {
         }
     }
 
-    /// Create a new color from a ColorShade
-    pub fn from_shade(shade: &ColorShade) -> Self {
-        let (r, g, b) = shade.to_rgb();
-        Self::new(r, g, b)
-    }
-
     /// Get the RGB components of the color
     pub fn rgb(&self) -> (u8, u8, u8) {
         (self.rgb.r, self.rgb.g, self.rgb.b)
@@ -35,20 +29,6 @@ impl Color {
     /// Get the hex representation of the color
     pub fn to_hex(&self) -> String {
         format!("#{:02X}{:02X}{:02X}", self.rgb.r, self.rgb.g, self.rgb.b)
-    }
-
-    /// Check if this color is any shade of yellow
-    pub fn is_yellow_shade(&self) -> bool {
-        let (r, g, b) = self.rgb();
-        // Yellow shades have high red and green values, low blue
-        r > 200 && g > 180 && b < 130
-    }
-
-    /// Check if this color is any shade of blue
-    pub fn is_blue_shade(&self) -> bool {
-        let (r, _g, b) = self.rgb();
-        // Blue shades have low red, varying green, and high blue (except dark blue)
-        r < 120 && b > 30 && r < b
     }
 
     /// Compare color to standard yellow
@@ -79,87 +59,6 @@ impl Color {
     /// Compare color to dark blue
     pub fn is_dark_blue(&self) -> bool {
         self.rgb.r == 0 && self.rgb.g == 32 && self.rgb.b == 91
-    }
-}
-
-/// Predefined color shades
-pub enum ColorShade {
-    Yellow,
-    LightYellow,
-    DarkYellow,
-    Blue,
-    LightBlue,
-    DarkBlue,
-}
-
-impl ColorShade {
-    /// Get the RGB values for this color shade
-    pub fn to_rgb(&self) -> (u8, u8, u8) {
-        match self {
-            // Yellow shades
-            ColorShade::Yellow => (255, 237, 0),      // Standard yellow #FFED00
-            ColorShade::LightYellow => (255, 249, 128), // Light yellow #FFF980
-            ColorShade::DarkYellow => (204, 187, 0),  // Dark yellow #CCBB00
-
-            // Blue shades
-            ColorShade::Blue => (0, 71, 171),       // Standard blue #0047AB
-            ColorShade::LightBlue => (102, 153, 255), // Light blue #6699FF
-            ColorShade::DarkBlue => (0, 32, 91),    // Dark blue #00205B
-        }
-    }
-
-    /// Get the name of this color shade
-    pub fn name(&self) -> &'static str {
-        match self {
-            ColorShade::Yellow => "yellow",
-            ColorShade::LightYellow => "light-yellow",
-            ColorShade::DarkYellow => "dark-yellow",
-            ColorShade::Blue => "blue",
-            ColorShade::LightBlue => "light-blue",
-            ColorShade::DarkBlue => "dark-blue",
-        }
-    }
-
-    /// Get the hex code for this color shade
-    pub fn hex_code(&self) -> &'static str {
-        match self {
-            ColorShade::Yellow => "#FFED00",
-            ColorShade::LightYellow => "#FFF980",
-            ColorShade::DarkYellow => "#CCBB00",
-            ColorShade::Blue => "#0047AB",
-            ColorShade::LightBlue => "#6699FF",
-            ColorShade::DarkBlue => "#00205B",
-        }
-    }
-
-    /// Get all available color shades
-    pub fn all() -> Vec<ColorShade> {
-        vec![
-            ColorShade::Yellow,
-            ColorShade::LightYellow,
-            ColorShade::DarkYellow,
-            ColorShade::Blue,
-            ColorShade::LightBlue,
-            ColorShade::DarkBlue,
-        ]
-    }
-
-    /// Get all yellow shades
-    pub fn yellow_shades() -> Vec<ColorShade> {
-        vec![
-            ColorShade::Yellow,
-            ColorShade::LightYellow,
-            ColorShade::DarkYellow,
-        ]
-    }
-
-    /// Get all blue shades
-    pub fn blue_shades() -> Vec<ColorShade> {
-        vec![
-            ColorShade::Blue,
-            ColorShade::LightBlue,
-            ColorShade::DarkBlue,
-        ]
     }
 }
 
